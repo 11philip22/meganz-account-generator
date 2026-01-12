@@ -3,11 +3,7 @@ name = "meganz-account-generator"
 version = "0.1.0"
 edition = "2021"
 description = "Automated MEGA.nz account generator using temporary email"
-license = "MIT"
-
-[[bin]]
-name = "meganz-account-generator"
-path = "src/main.rs"
+license = "GPL-2.0-or-later"
 
 [dependencies]
 # MEGA client
@@ -19,10 +15,15 @@ guerrillamail-client = { path = "../guerillamail-rs" }
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 
-# CLI
+# CLI (for example only)
 clap = { version = "4", features = ["derive"] }
 
 # Utilities
 regex = "1"
 rand = "0.8"
 thiserror = "1"
+
+[[example]]
+name = "cli"
+path = "examples/cli.rs"
+
