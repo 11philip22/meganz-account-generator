@@ -90,19 +90,13 @@ impl AccountGenerator {
         let alias = generate_random_alias();
         let account_name = name.map(String::from).unwrap_or_else(generate_random_name);
 
-        println!("📧 Creating temporary email...");
         let email = self.mail_client.create_email(&alias, None).await?;
-        println!("   Email: {}", email);
 
-        println!("📝 Initiating MEGA registration...");
         let state = register(&email, password, &account_name).await?;
-        println!("   Registration initiated, waiting for confirmation email...");
 
         // Poll for confirmation email
         let confirm_key = self.wait_for_confirmation(&email).await?;
-        println!("   Confirmation link received!");
 
-        println!("✅ Completing registration...");
         verify_registration(&state, &confirm_key).await?;
 
         // Cleanup: delete temporary email
@@ -137,11 +131,6 @@ impl AccountGenerator {
                 }
             }
 
-            let remaining = (self.timeout.as_secs() as i64) - (start.elapsed().as_secs() as i64);
-            print!("\r   Waiting for email... {} seconds remaining    ", remaining.max(0));
-            use std::io::Write;
-            std::io::stdout().flush().ok();
-
             tokio::time::sleep(self.poll_interval).await;
         }
     }
@@ -152,7 +141,7 @@ fn extract_confirm_key(body: &str) -> Option<String> {
     // MEGA confirmation links look like:
     // https://mega.nz/#confirm<KEY>
     // https://mega.nz/confirm<KEY>
-    
+
     let patterns = [
         r"https://mega\.nz/#confirm([a-zA-Z0-9_-]+)",
         r"https://mega\.nz/confirm([a-zA-Z0-9_-]+)",
@@ -176,9 +165,11 @@ fn extract_confirm_key(body: &str) -> Option<String> {
 /// Generate a random email alias.
 fn generate_random_alias() -> String {
     let mut rng = rand::thread_rng();
-    let adjectives = ["cool", "fast", "smart", "happy", "lucky", "mega", "super", "ultra"];
+    let adjectives = [
+        "cool", "fast", "smart", "happy", "lucky", "mega", "super", "ultra",
+    ];
     let nouns = ["user", "person", "account", "member", "client", "agent"];
-    
+
     format!(
         "{}{}{}",
         adjectives[rng.gen_range(0..adjectives.len())],
@@ -190,9 +181,13 @@ fn generate_random_alias() -> String {
 /// Generate a random name.
 fn generate_random_name() -> String {
     let mut rng = rand::thread_rng();
-    let first_names = ["Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Quinn", "Avery"];
-    let last_names = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Davis", "Miller", "Wilson"];
-    
+    let first_names = [
+        "Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Quinn", "Avery",
+    ];
+    let last_names = [
+        "Smith", "Johnson", "Williams", "Brown", "Jones", "Davis", "Miller", "Wilson",
+    ];
+
     format!(
         "{} {}",
         first_names[rng.gen_range(0..first_names.len())],
