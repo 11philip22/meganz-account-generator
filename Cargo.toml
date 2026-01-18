@@ -10,7 +10,7 @@ categories = ["api-bindings", "authentication", "command-line-utilities"]
 
 [dependencies]
 # MEGA client
-megalib = { version = "0.1.1" }
+megalib = { path = "../megalib" }
 
 # Temporary email
 guerrillamail-client = { version = "0.2.0" }

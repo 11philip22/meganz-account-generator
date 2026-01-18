@@ -92,12 +92,12 @@ impl AccountGenerator {
 
         let email = self.mail_client.create_email(&alias, None).await?;
 
-        let state = register(&email, password, &account_name).await?;
+        let state = register(&email, password, &account_name, None).await?;
 
         // Poll for confirmation email
         let confirm_key = self.wait_for_confirmation(&email).await?;
 
-        verify_registration(&state, &confirm_key).await?;
+        verify_registration(&state, &confirm_key, None).await?;
 
         // Cleanup: delete temporary email
         let _ = self.mail_client.delete_email(&email).await;
