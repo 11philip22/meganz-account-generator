@@ -28,6 +28,10 @@ struct Args {
     /// Output file to save credentials (appends to file)
     #[arg(short, long)]
     output: Option<String>,
+
+    /// Proxy URL (e.g., http://127.0.0.1:8080)
+    #[arg(long)]
+    proxy: Option<String>,
 }
 
 #[tokio::main]
@@ -37,7 +41,7 @@ async fn main() {
     println!("🚀 MEGA.nz Account Generator");
     println!("{}", "=".repeat(40));
 
-    let generator = match AccountGenerator::new().await {
+    let generator = match AccountGenerator::new(args.proxy.as_deref()).await {
         Ok(g) => g,
         Err(e) => {
             eprintln!("❌ Failed to initialize: {}", e);
@@ -52,7 +56,10 @@ async fn main() {
             println!("\n📋 Generating account {}/{}...", i, args.count);
         }
 
-        match generator.generate(&args.password, args.name.as_deref()).await {
+        match generator
+            .generate(&args.password, args.name.as_deref())
+            .await
+        {
             Ok(account) => {
                 successful += 1;
                 println!("\n{}", "=".repeat(40));
@@ -82,14 +89,17 @@ async fn main() {
     }
 
     println!("\n{}", "=".repeat(40));
-    println!("📊 Summary: {}/{} accounts created successfully", successful, args.count);
+    println!(
+        "📊 Summary: {}/{} accounts created successfully",
+        successful, args.count
+    );
 }
 
-fn save_to_file(path: &str, account: &meganz_account_generator::GeneratedAccount) -> std::io::Result<()> {
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
+fn save_to_file(
+    path: &str,
+    account: &meganz_account_generator::GeneratedAccount,
+) -> std::io::Result<()> {
+    let mut file = OpenOptions::new().create(true).append(true).open(path)?;
 
     writeln!(file, "---")?;
     writeln!(file, "Email: {}", account.email)?;

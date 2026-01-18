@@ -57,26 +57,34 @@ pub struct AccountGenerator {
     mail_client: MailClient,
     timeout: Duration,
     poll_interval: Duration,
+    proxy: Option<String>,
 }
 
 impl AccountGenerator {
     /// Create a new account generator.
-    pub async fn new() -> Result<Self> {
-        let mail_client = MailClient::new().await?;
+    pub async fn new(proxy: Option<&str>) -> Result<Self> {
+        let mail_client = MailClient::with_proxy(proxy).await?;
         Ok(Self {
             mail_client,
             timeout: Duration::from_secs(300), // 5 minute timeout
             poll_interval: Duration::from_secs(5),
+            proxy: proxy.map(String::from),
         })
     }
 
     /// Create a new account generator with custom timeouts.
-    pub async fn with_timeouts(timeout: Duration, poll_interval: Duration) -> Result<Self> {
-        let mail_client = MailClient::new().await?;
+    /// Create a new account generator with custom timeouts.
+    pub async fn with_timeouts(
+        timeout: Duration,
+        poll_interval: Duration,
+        proxy: Option<&str>,
+    ) -> Result<Self> {
+        let mail_client = MailClient::with_proxy(proxy).await?;
         Ok(Self {
             mail_client,
             timeout,
             poll_interval,
+            proxy: proxy.map(String::from),
         })
     }
 
@@ -92,12 +100,12 @@ impl AccountGenerator {
 
         let email = self.mail_client.create_email(&alias, None).await?;
 
-        let state = register(&email, password, &account_name, None).await?;
+        let state = register(&email, password, &account_name, self.proxy.as_deref()).await?;
 
         // Poll for confirmation email
         let confirm_key = self.wait_for_confirmation(&email).await?;
 
-        verify_registration(&state, &confirm_key, None).await?;
+        verify_registration(&state, &confirm_key, self.proxy.as_deref()).await?;
 
         // Cleanup: delete temporary email
         let _ = self.mail_client.delete_email(&email).await;
