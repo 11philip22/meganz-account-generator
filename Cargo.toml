@@ -1,7 +1,7 @@
 [package]
 name = "meganz-account-generator"
-version = "0.3.0"
-edition = "2021"
+version = "0.3.1"
+edition = "2024"
 description = "Automated MEGA.nz account generator using temporary email"
 license = "GPL-2.0-or-later"
 repository = "https://github.com/11philip22/meganz-account-generator"
@@ -10,10 +10,10 @@ categories = ["api-bindings", "authentication", "command-line-utilities"]
 
 [dependencies]
 # MEGA client
-megalib = "0.3.0"
+megalib = "0.5.0"
 
 # Temporary email
-guerrillamail-client = "0.2.1"
+guerrillamail-client = "0.4.0"
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
