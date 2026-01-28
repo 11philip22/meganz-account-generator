@@ -3,6 +3,7 @@
 [![Crates.io](https://img.shields.io/crates/v/meganz-account-generator.svg)](https://crates.io/crates/meganz-account-generator)
 [![Documentation](https://docs.rs/meganz-account-generator/badge.svg)](https://docs.rs/meganz-account-generator)
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/woldp001/guerrillamail-client-rs/pulls)
 
 Automated account creation for MEGA.nz using temporary email addresses (GuerrillaMail).
 
@@ -28,7 +29,7 @@ use meganz_account_generator::AccountGenerator;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize generator
-    let generator = AccountGenerator::new().await?;
+    let generator = AccountGenerator::new(None).await?;
 
     // specific name
     let account = generator.generate("MySecurePassword123!", Some("My Name")).await?;
@@ -42,6 +43,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+## Public API
+
+The library exposes the following public types and methods:
+
+- `Error`: error enum for account generation failures
+- `Result<T>`: crate-specific result alias
+- `GeneratedAccount`: contains `email`, `password`, and `name`
+- `AccountGenerator`:
+  - `new(proxy: Option<&str>) -> Result<AccountGenerator>`: default 5-minute timeout, 5-second poll
+  - `with_timeouts(timeout: Duration, poll_interval: Duration, proxy: Option<&str>) -> Result<AccountGenerator>`
+  - `generate(password: &str, name: Option<&str>) -> Result<GeneratedAccount>`
 
 ## Running the CLI Example
 
@@ -69,6 +82,8 @@ Options:
   -h, --help                 Print help
 ```
 
-## License
+## Support
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/11philip22)
 
-This project is licensed under the GNU General Public License v2.0 (GPLv2) - see the [license](license) file for details.
+## License
+GNU General Public License v2.0 (GPLv2); see the [license](license) file for details.
