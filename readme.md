@@ -86,4 +86,4 @@ Options:
 [![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/11philip22)
 
 ## License
-GNU General Public License v2.0 (GPLv2); see the [license](license) file for details.
+This project is licensed under the GNU General Public License v2.0 (GPLv2); see the [license](license) file for details.
