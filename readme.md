@@ -87,7 +87,7 @@ Options:
 PRs are welcome!  
 Please run `cargo fmt` and `cargo clippy` before submitting.
 
-If you’re changing behavior, document it in the PR.
+If you’re changing behavior, please document it in the PR.
 
 ## Support
 
