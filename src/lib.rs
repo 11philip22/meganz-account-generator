@@ -53,6 +53,9 @@ impl std::fmt::Display for GeneratedAccount {
 }
 
 /// Account generator that combines GuerrillaMail and MEGA.
+///
+/// Use [`AccountGenerator::new`] for default timeouts or
+/// [`AccountGenerator::with_timeouts`] for custom polling behavior.
 pub struct AccountGenerator {
     mail_client: MailClient,
     timeout: Duration,
@@ -62,6 +65,9 @@ pub struct AccountGenerator {
 
 impl AccountGenerator {
     /// Create a new account generator.
+    ///
+    /// # Arguments
+    /// * `proxy` - Optional HTTP proxy URL to use for MEGA and GuerrillaMail requests
     pub async fn new(proxy: Option<&str>) -> Result<Self> {
         let mail_client = build_mail_client(proxy).await?;
         Ok(Self {
@@ -73,6 +79,11 @@ impl AccountGenerator {
     }
 
     /// Create a new account generator with custom timeouts.
+    ///
+    /// # Arguments
+    /// * `timeout` - Maximum time to wait for the confirmation email
+    /// * `poll_interval` - How often to poll for new email
+    /// * `proxy` - Optional HTTP proxy URL to use for MEGA and GuerrillaMail requests
     pub async fn with_timeouts(
         timeout: Duration,
         poll_interval: Duration,
