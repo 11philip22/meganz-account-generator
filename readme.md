@@ -69,6 +69,19 @@ Options:
   -h, --help                 Print help
 ```
 
+## Contributing
+
+PRs are welcome!  
+Please run `cargo fmt` and `cargo clippy` before submitting.
+
+If you’re changing behavior, document it in the PR.
+
+## Support
+
+If this crate saves you time or helps your work, support is appreciated:
+
+[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/11philip22)
+
 ## License
 
-This project is licensed under the GNU General Public License v2.0 (GPLv2) - see the [license](license) file for details.
+This project is licensed under the MIT License; see [license](license) for details.
