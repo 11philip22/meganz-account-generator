@@ -1,9 +1,9 @@
 [package]
 name = "meganz-account-generator"
-version = "0.3.4"
+version = "0.4.0"
 edition = "2024"
 description = "Automated MEGA.nz account generator using temporary email"
-license = "GPL-2.0-or-later"
+license = "MIT"
 repository = "https://github.com/11philip22/meganz-account-generator"
 keywords = ["mega", "meganz", "account-generator", "automation", "email"]
 categories = ["api-bindings", "authentication", "command-line-utilities"]

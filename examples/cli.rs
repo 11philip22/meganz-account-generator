@@ -65,10 +65,13 @@ async fn main() {
             println!("\n[{}/{}] Creating account...", i, args.count);
         }
 
-        match generator
-            .generate(&args.password, args.name.as_deref())
-            .await
-        {
+        let result = if let Some(name) = args.name.as_deref() {
+            generator.generate_with_name(&args.password, name).await
+        } else {
+            generator.generate(&args.password).await
+        };
+
+        match result {
             Ok(account) => {
                 successful += 1;
                 if args.verbose {

@@ -34,10 +34,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let generator = AccountGenerator::new().await?;
 
     // specific name
-    let account = generator.generate("MySecurePassword123!", Some("My Name")).await?;
+    let account = generator
+        .generate_with_name("MySecurePassword123!", "My Name")
+        .await?;
     
     // OR random name
-    // let account = generator.generate("MySecurePassword123!", None).await?;
+    // let account = generator.generate("MySecurePassword123!").await?;
 
     println!("Created account: {}", account.email);
     println!("Password: {}", account.password);
@@ -61,7 +63,8 @@ The library exposes the following public types and methods:
   - `AccountGeneratorBuilder::timeout(timeout)`
   - `AccountGeneratorBuilder::poll_interval(poll_interval)`
   - `AccountGeneratorBuilder::build().await`
-  - `generate(password: &str, name: Option<&str>) -> Result<GeneratedAccount>`
+  - `generate(password: &str) -> Result<GeneratedAccount>`
+  - `generate_with_name(password: &str, name: &str) -> Result<GeneratedAccount>`
 
 ## Running the CLI Example
 
@@ -76,6 +79,9 @@ cargo run --example cli -- --password "YourStrongPassword!" --count 5 --output a
 
 # Specify a custom name
 cargo run --example cli -- --password "YourStrongPassword!" --name "Custom User"
+
+# Use an HTTP proxy and verbose output
+cargo run --example cli -- --password "YourStrongPassword!" --proxy "http://127.0.0.1:8080" --verbose
 ```
 
 ## CLI Options
@@ -86,7 +92,10 @@ Options:
   -n, --name <NAME>          Name for the account (random if not specified)
   -c, --count <COUNT>        Number of accounts to generate [default: 1]
   -o, --output <FILE>        Output file to save credentials (appends to file)
+      --proxy <PROXY>        Proxy URL (e.g., http://127.0.0.1:8080)
+  -v, --verbose              Show detailed per-account output
   -h, --help                 Print help
+  -V, --version              Print version
 ```
 
 ## Contributing

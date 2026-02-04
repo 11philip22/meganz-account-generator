@@ -36,28 +36,31 @@ impl AccountGenerator {
         Self::builder().build().await
     }
 
-    /// Create a new account generator with custom timeouts.
-    ///
-    /// # Arguments
-    /// * `timeout` - Maximum time to wait for the confirmation email
-    /// * `poll_interval` - How often to poll for new email
-    pub async fn with_timeouts(timeout: Duration, poll_interval: Duration) -> Result<Self> {
-        Self::builder()
-            .timeout(timeout)
-            .poll_interval(poll_interval)
-            .build()
-            .await
-    }
-
-    /// Generate a MEGA account.
+    /// Generate a MEGA account with a random name.
     ///
     /// # Arguments
     /// * `password` - The password for the new account
-    /// * `name` - Optional name (random if not provided)
-    pub async fn generate(&self, password: &str, name: Option<&str>) -> Result<GeneratedAccount> {
+    pub async fn generate(&self, password: &str) -> Result<GeneratedAccount> {
+        let name = generate_random_name();
+        self.generate_inner(password, name).await
+    }
+
+    /// Generate a MEGA account with an explicit account name.
+    ///
+    /// # Arguments
+    /// * `password` - The password for the new account
+    /// * `name` - The account holder name
+    pub async fn generate_with_name(&self, password: &str, name: &str) -> Result<GeneratedAccount> {
+        self.generate_inner(password, name.to_string()).await
+    }
+
+    async fn generate_inner(
+        &self,
+        password: &str,
+        account_name: String,
+    ) -> Result<GeneratedAccount> {
         // Generate random alias
         let alias = generate_random_alias();
-        let account_name = name.map(String::from).unwrap_or_else(generate_random_name);
 
         let email = self.mail_client.create_email(&alias).await?;
 
