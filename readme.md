@@ -5,6 +5,8 @@
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/woldp001/guerrillamail-client-rs/pulls)
 
+<img src="https://upload.wikimedia.org/wikipedia/commons/b/bc/MEGA_logo.png" alt="MEGA Logo" width="300">
+
 Automated account creation for MEGA.nz using temporary email addresses (GuerrillaMail).
 
 ## Features
@@ -20,7 +22,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-meganz-account-generator = "0.1.0"
+meganz-account-generator = "0.3.4"
 ```
 
 ```rust
@@ -97,4 +99,4 @@ If this crate saves you time or helps your work, support is appreciated:
 
 ## License
 
-This project is licensed under the MIT License; see [license](license) for details.
+This project is licensed under the MIT License; see the [license](license) file for details.

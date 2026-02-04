@@ -1,7 +1,7 @@
 //! MEGA.nz Account Generator CLI
 //!
 //! Usage:
-//!   meganz-account-generator --password <PASSWORD> [--name <NAME>] [--count <N>] [--output <FILE>]
+//!   meganz-account-generator --password <PASSWORD> [--name <NAME>] [--count <N>] [--output <FILE>] [--proxy <URL>] [--verbose]
 
 use clap::Parser;
 use meganz_account_generator::AccountGenerator;
@@ -32,6 +32,10 @@ struct Args {
     /// Proxy URL (e.g., http://127.0.0.1:8080)
     #[arg(long)]
     proxy: Option<String>,
+
+    /// Show detailed per-account output
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 #[tokio::main]
@@ -39,12 +43,12 @@ async fn main() {
     let args = Args::parse();
 
     println!("🚀 MEGA.nz Account Generator");
-    println!("{}", "=".repeat(40));
+    println!("Creating {} account(s)...", args.count);
 
     let generator = match AccountGenerator::new(args.proxy.as_deref()).await {
         Ok(g) => g,
         Err(e) => {
-            eprintln!("❌ Failed to initialize: {}", e);
+            eprintln!("Failed to initialize: {}", e);
             std::process::exit(1);
         }
     };
@@ -52,8 +56,8 @@ async fn main() {
     let mut successful = 0;
 
     for i in 1..=args.count {
-        if args.count > 1 {
-            println!("\n📋 Generating account {}/{}...", i, args.count);
+        if args.verbose {
+            println!("\n[{}/{}] Creating account...", i, args.count);
         }
 
         match generator
@@ -62,37 +66,46 @@ async fn main() {
         {
             Ok(account) => {
                 successful += 1;
-                println!("\n{}", "=".repeat(40));
-                println!("✅ Account created successfully!");
-                println!("{}", account);
-                println!("{}", "=".repeat(40));
+                if args.verbose {
+                    println!("Status: SUCCESS");
+                    println!("Email: {}", account.email);
+                    println!("Password: {}", account.password);
+                    println!("Name: {}", account.name);
+                } else {
+                    println!("[{}/{}] OK {}", i, args.count, account.email);
+                }
 
                 // Save to file if specified
                 if let Some(ref output_path) = args.output {
                     if let Err(e) = save_to_file(output_path, &account) {
-                        eprintln!("⚠️  Failed to save to file: {}", e);
-                    } else {
-                        println!("💾 Saved to {}", output_path);
+                        eprintln!("Failed to save to file: {}", e);
+                    } else if args.verbose {
+                        println!("Saved to {}", output_path);
                     }
                 }
             }
             Err(e) => {
-                eprintln!("\n❌ Failed to generate account: {}", e);
+                if args.verbose {
+                    eprintln!("[{}/{}] Status: FAILED", i, args.count);
+                } else {
+                    eprintln!("[{}/{}] FAILED {}", i, args.count, e);
+                }
+                if args.verbose {
+                    eprintln!("Reason: {}", e);
+                }
             }
         }
 
         // Add delay between accounts to avoid rate limiting
         if i < args.count {
-            println!("\n⏳ Waiting 30 seconds before next account...");
+            if args.verbose {
+                println!("\nWaiting 30 seconds before next account...");
+            }
             tokio::time::sleep(std::time::Duration::from_secs(30)).await;
         }
     }
 
-    println!("\n{}", "=".repeat(40));
-    println!(
-        "📊 Summary: {}/{} accounts created successfully",
-        successful, args.count
-    );
+    println!("Done: {}/{} successful", successful, args.count);
 }
 
 fn save_to_file(
