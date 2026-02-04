@@ -2,8 +2,10 @@
 //!
 //! Automated account registration using temporary email.
 
+mod account;
 mod errors;
 mod generator;
 
+pub use account::GeneratedAccount;
 pub use errors::{Error, Result};
-pub use generator::{AccountGenerator, AccountGeneratorBuilder, GeneratedAccount};
+pub use generator::{AccountGenerator, AccountGeneratorBuilder};
