@@ -1,11 +1,15 @@
-/// A generated MEGA account.
+/// Credentials returned after successful account generation and confirmation.
+///
+/// The `password` field is the same plaintext value passed to
+/// [`crate::AccountGenerator::generate`] or
+/// [`crate::AccountGenerator::generate_with_name`].
 #[derive(Debug, Clone)]
 pub struct GeneratedAccount {
-    /// The email address used for registration.
+    /// Temporary email address used for registration.
     pub email: String,
-    /// The account password.
+    /// Account password provided by the caller.
     pub password: String,
-    /// The account holder's name.
+    /// Account display name used during signup.
     pub name: String,
 }
 
