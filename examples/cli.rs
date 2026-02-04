@@ -45,7 +45,12 @@ async fn main() {
     println!("🚀 MEGA.nz Account Generator");
     println!("Creating {} account(s)...", args.count);
 
-    let generator = match AccountGenerator::new(args.proxy.as_deref()).await {
+    let mut builder = AccountGenerator::builder();
+    if let Some(proxy_url) = args.proxy {
+        builder = builder.proxy(proxy_url);
+    }
+
+    let generator = match builder.build().await {
         Ok(g) => g,
         Err(e) => {
             eprintln!("Failed to initialize: {}", e);

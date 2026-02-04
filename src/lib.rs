@@ -63,19 +63,23 @@ pub struct AccountGenerator {
     proxy: Option<String>,
 }
 
+/// Builder for [`AccountGenerator`].
+#[derive(Debug, Clone)]
+pub struct AccountGeneratorBuilder {
+    timeout: Duration,
+    poll_interval: Duration,
+    proxy: Option<String>,
+}
+
 impl AccountGenerator {
+    /// Create a builder for configuring an account generator.
+    pub fn builder() -> AccountGeneratorBuilder {
+        AccountGeneratorBuilder::default()
+    }
+
     /// Create a new account generator.
-    ///
-    /// # Arguments
-    /// * `proxy` - Optional HTTP proxy URL to use for MEGA and GuerrillaMail requests
-    pub async fn new(proxy: Option<&str>) -> Result<Self> {
-        let mail_client = build_mail_client(proxy).await?;
-        Ok(Self {
-            mail_client,
-            timeout: Duration::from_secs(300), // 5 minute timeout
-            poll_interval: Duration::from_secs(5),
-            proxy: proxy.map(String::from),
-        })
+    pub async fn new() -> Result<Self> {
+        Self::builder().build().await
     }
 
     /// Create a new account generator with custom timeouts.
@@ -83,19 +87,12 @@ impl AccountGenerator {
     /// # Arguments
     /// * `timeout` - Maximum time to wait for the confirmation email
     /// * `poll_interval` - How often to poll for new email
-    /// * `proxy` - Optional HTTP proxy URL to use for MEGA and GuerrillaMail requests
-    pub async fn with_timeouts(
-        timeout: Duration,
-        poll_interval: Duration,
-        proxy: Option<&str>,
-    ) -> Result<Self> {
-        let mail_client = build_mail_client(proxy).await?;
-        Ok(Self {
-            mail_client,
-            timeout,
-            poll_interval,
-            proxy: proxy.map(String::from),
-        })
+    pub async fn with_timeouts(timeout: Duration, poll_interval: Duration) -> Result<Self> {
+        Self::builder()
+            .timeout(timeout)
+            .poll_interval(poll_interval)
+            .build()
+            .await
     }
 
     /// Generate a MEGA account.
@@ -108,10 +105,7 @@ impl AccountGenerator {
         let alias = generate_random_alias();
         let account_name = name.map(String::from).unwrap_or_else(generate_random_name);
 
-        let email = self
-            .mail_client
-            .create_email(&alias)
-            .await?;
+        let email = self.mail_client.create_email(&alias).await?;
 
         let state = register(&email, password, &account_name, self.proxy.as_deref()).await?;
 
@@ -157,6 +151,47 @@ impl AccountGenerator {
     }
 }
 
+impl Default for AccountGeneratorBuilder {
+    fn default() -> Self {
+        Self {
+            timeout: Duration::from_secs(300), // 5 minute timeout
+            poll_interval: Duration::from_secs(5),
+            proxy: None,
+        }
+    }
+}
+
+impl AccountGeneratorBuilder {
+    /// Configure an HTTP proxy URL for MEGA and GuerrillaMail requests.
+    pub fn proxy(mut self, proxy: impl Into<String>) -> Self {
+        self.proxy = Some(proxy.into());
+        self
+    }
+
+    /// Configure the maximum time to wait for a confirmation email.
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.timeout = timeout;
+        self
+    }
+
+    /// Configure how often to poll for new confirmation emails.
+    pub fn poll_interval(mut self, poll_interval: Duration) -> Self {
+        self.poll_interval = poll_interval;
+        self
+    }
+
+    /// Build an [`AccountGenerator`] with the configured values.
+    pub async fn build(self) -> Result<AccountGenerator> {
+        let mail_client = build_mail_client(self.proxy.as_deref()).await?;
+        Ok(AccountGenerator {
+            mail_client,
+            timeout: self.timeout,
+            poll_interval: self.poll_interval,
+            proxy: self.proxy,
+        })
+    }
+}
+
 async fn build_mail_client(proxy: Option<&str>) -> Result<MailClient> {
     let mut builder = MailClient::builder();
     if let Some(proxy_url) = proxy {
@@ -197,21 +232,63 @@ fn generate_random_alias() -> String {
     let adjectives = [
         "ashen", "bleak", "civic", "cold", "covert", "drift", "echo", "grim", "iron", "kilo",
         "latent", "mute", "neon", "noir", "null", "omni", "pale", "quiet", "shadow", "silent",
-        "static", "steel", "thin", "vanta",
-        "acid", "arc", "blight", "brine", "brume", "carbon", "choke", "cipher", "cryo", "delta",
-        "dusk", "ember", "feral", "fract", "ghost", "hollow", "hush", "ice", "ivory", "jett",
-        "knife", "lunar", "mire", "murk", "mylar", "nadir", "night", "obsid", "onyx", "oxide",
-        "plague", "ravel", "razor", "rot", "sable", "scar", "shard", "slate", "smoke", "suture",
-        "toxin", "ultra", "umbra", "void", "weld", "wire", "wraith", "zero",
+        "static", "steel", "thin", "vanta", "acid", "arc", "blight", "brine", "brume", "carbon",
+        "choke", "cipher", "cryo", "delta", "dusk", "ember", "feral", "fract", "ghost", "hollow",
+        "hush", "ice", "ivory", "jett", "knife", "lunar", "mire", "murk", "mylar", "nadir",
+        "night", "obsid", "onyx", "oxide", "plague", "ravel", "razor", "rot", "sable", "scar",
+        "shard", "slate", "smoke", "suture", "toxin", "ultra", "umbra", "void", "weld", "wire",
+        "wraith", "zero",
     ];
     let nouns = [
-        "agent", "asset", "citizen", "client", "custodian", "drifter", "emissary", "enrollee",
-        "entity", "index", "inmate", "node", "observer", "operative", "proxy", "report", "sector",
-        "signal", "subject", "witness",
-        "archive", "backdoor", "barrier", "census", "cipher", "command", "district", "echo",
-        "firmware", "grid", "handler", "ledger", "lock", "mesh", "mirror", "module", "nexus",
-        "protocol", "relay", "rubble", "sector", "shard", "siren", "station", "terminal",
-        "vector", "vault", "ward", "zone",
+        "agent",
+        "asset",
+        "citizen",
+        "client",
+        "custodian",
+        "drifter",
+        "emissary",
+        "enrollee",
+        "entity",
+        "index",
+        "inmate",
+        "node",
+        "observer",
+        "operative",
+        "proxy",
+        "report",
+        "sector",
+        "signal",
+        "subject",
+        "witness",
+        "archive",
+        "backdoor",
+        "barrier",
+        "census",
+        "cipher",
+        "command",
+        "district",
+        "echo",
+        "firmware",
+        "grid",
+        "handler",
+        "ledger",
+        "lock",
+        "mesh",
+        "mirror",
+        "module",
+        "nexus",
+        "protocol",
+        "relay",
+        "rubble",
+        "sector",
+        "shard",
+        "siren",
+        "station",
+        "terminal",
+        "vector",
+        "vault",
+        "ward",
+        "zone",
     ];
 
     format!(
@@ -226,26 +303,152 @@ fn generate_random_alias() -> String {
 fn generate_random_name() -> String {
     let mut rng = rand::thread_rng();
     let first_names = [
-        "Amina", "Chidi", "Emeka", "Ifunanya", "Ifeoma", "Kelechi", "Ngozi", "Obinna",
-        "Chinwe", "Uche", "Zainab", "Tunde", "Bola", "Sade", "Ade", "Kunle",
-        "Amaka", "Chiamaka", "Chukwuemeka", "Oluwaseun", "Olamide", "Folake", "Yetunde", "Efe",
-        "Nneka", "Ugo", "Chinonso", "Opeyemi", "Tope", "Ayodele", "Zubairu", "Hadiza",
-        "Akira", "Hana", "Hiro", "Kenji", "Mei", "Rin", "Sora", "Yuki",
-        "Jin", "Minseo", "Hyun", "Jisoo", "Soojin", "Daichi", "Keiko", "Yuna",
-        "Kaito", "Ren", "Hina", "Sakura", "Takumi", "Yuto", "Haruka", "Aoi",
-        "Minho", "Jiyoon", "Seojun", "Eunji", "Seoyeon", "Joon", "Hyejin", "Sooyoung",
-        "Wei", "Jun", "Hao", "Ying", "Lin", "Xiu", "Bo", "Fang",
+        "Amina",
+        "Chidi",
+        "Emeka",
+        "Ifunanya",
+        "Ifeoma",
+        "Kelechi",
+        "Ngozi",
+        "Obinna",
+        "Chinwe",
+        "Uche",
+        "Zainab",
+        "Tunde",
+        "Bola",
+        "Sade",
+        "Ade",
+        "Kunle",
+        "Amaka",
+        "Chiamaka",
+        "Chukwuemeka",
+        "Oluwaseun",
+        "Olamide",
+        "Folake",
+        "Yetunde",
+        "Efe",
+        "Nneka",
+        "Ugo",
+        "Chinonso",
+        "Opeyemi",
+        "Tope",
+        "Ayodele",
+        "Zubairu",
+        "Hadiza",
+        "Akira",
+        "Hana",
+        "Hiro",
+        "Kenji",
+        "Mei",
+        "Rin",
+        "Sora",
+        "Yuki",
+        "Jin",
+        "Minseo",
+        "Hyun",
+        "Jisoo",
+        "Soojin",
+        "Daichi",
+        "Keiko",
+        "Yuna",
+        "Kaito",
+        "Ren",
+        "Hina",
+        "Sakura",
+        "Takumi",
+        "Yuto",
+        "Haruka",
+        "Aoi",
+        "Minho",
+        "Jiyoon",
+        "Seojun",
+        "Eunji",
+        "Seoyeon",
+        "Joon",
+        "Hyejin",
+        "Sooyoung",
+        "Wei",
+        "Jun",
+        "Hao",
+        "Ying",
+        "Lin",
+        "Xiu",
+        "Bo",
+        "Fang",
     ];
     let last_names = [
-        "Okafor", "Adebayo", "Okoye", "Olawale", "Nwosu", "Eze", "Ibrahim", "Yusuf",
-        "Chukwu", "Adeyemi", "Onyeka", "Balogun", "Fashola", "Umeh", "Nnamdi", "Sani",
-        "Okon", "Nwachukwu", "Ogunleye", "Abiola", "Ogunbiyi", "Okojie", "Ekwueme", "Oduro",
-        "Uzor", "Okpara", "Afolabi", "Ojo", "Adigun", "Ibe", "Okereke", "Nduka",
-        "Li", "Wang", "Zhang", "Chen", "Liu", "Yang", "Zhao", "Wu",
-        "Tanaka", "Sato", "Suzuki", "Watanabe", "Takahashi", "Yamamoto", "Nakamura", "Ito",
-        "Kobayashi", "Kato", "Yoshida", "Yamada", "Sasaki", "Mori", "Abe", "Saito",
-        "Kim", "Lee", "Park", "Choi", "Jung", "Kang", "Yoon", "Lim",
-        "Jeon", "Han", "Song", "Shin", "Kwon", "Hwang", "Jang", "Yoo",
+        "Okafor",
+        "Adebayo",
+        "Okoye",
+        "Olawale",
+        "Nwosu",
+        "Eze",
+        "Ibrahim",
+        "Yusuf",
+        "Chukwu",
+        "Adeyemi",
+        "Onyeka",
+        "Balogun",
+        "Fashola",
+        "Umeh",
+        "Nnamdi",
+        "Sani",
+        "Okon",
+        "Nwachukwu",
+        "Ogunleye",
+        "Abiola",
+        "Ogunbiyi",
+        "Okojie",
+        "Ekwueme",
+        "Oduro",
+        "Uzor",
+        "Okpara",
+        "Afolabi",
+        "Ojo",
+        "Adigun",
+        "Ibe",
+        "Okereke",
+        "Nduka",
+        "Li",
+        "Wang",
+        "Zhang",
+        "Chen",
+        "Liu",
+        "Yang",
+        "Zhao",
+        "Wu",
+        "Tanaka",
+        "Sato",
+        "Suzuki",
+        "Watanabe",
+        "Takahashi",
+        "Yamamoto",
+        "Nakamura",
+        "Ito",
+        "Kobayashi",
+        "Kato",
+        "Yoshida",
+        "Yamada",
+        "Sasaki",
+        "Mori",
+        "Abe",
+        "Saito",
+        "Kim",
+        "Lee",
+        "Park",
+        "Choi",
+        "Jung",
+        "Kang",
+        "Yoon",
+        "Lim",
+        "Jeon",
+        "Han",
+        "Song",
+        "Shin",
+        "Kwon",
+        "Hwang",
+        "Jang",
+        "Yoo",
     ];
 
     format!(

@@ -31,7 +31,7 @@ use meganz_account_generator::AccountGenerator;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize generator
-    let generator = AccountGenerator::new(None).await?;
+    let generator = AccountGenerator::new().await?;
 
     // specific name
     let account = generator.generate("MySecurePassword123!", Some("My Name")).await?;
@@ -54,8 +54,13 @@ The library exposes the following public types and methods:
 - `Result<T>`: crate-specific result alias
 - `GeneratedAccount`: contains `email`, `password`, and `name`
 - `AccountGenerator`:
-  - `new(proxy: Option<&str>) -> Result<AccountGenerator>`: default 5-minute timeout, 5-second poll
-  - `with_timeouts(timeout: Duration, poll_interval: Duration, proxy: Option<&str>) -> Result<AccountGenerator>`
+  - `new() -> Result<AccountGenerator>`: default 5-minute timeout, 5-second poll
+  - `with_timeouts(timeout: Duration, poll_interval: Duration) -> Result<AccountGenerator>`
+  - `builder() -> AccountGeneratorBuilder`
+  - `AccountGeneratorBuilder::proxy(proxy)`
+  - `AccountGeneratorBuilder::timeout(timeout)`
+  - `AccountGeneratorBuilder::poll_interval(poll_interval)`
+  - `AccountGeneratorBuilder::build().await`
   - `generate(password: &str, name: Option<&str>) -> Result<GeneratedAccount>`
 
 ## Running the CLI Example
