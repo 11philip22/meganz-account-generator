@@ -84,10 +84,15 @@ impl AccountGenerator {
     /// Wait for the MEGA confirmation email and extract the signup key.
     async fn wait_for_confirmation(&self, email: &str) -> Result<String> {
         let start = std::time::Instant::now();
+        let mut saw_mega_email = false;
 
         loop {
             if start.elapsed() >= self.timeout {
-                return Err(Error::EmailTimeout);
+                return if saw_mega_email {
+                    Err(Error::NoConfirmationLink)
+                } else {
+                    Err(Error::EmailTimeout)
+                };
             }
 
             let messages = self.mail_client.get_messages(email).await?;
@@ -95,6 +100,8 @@ impl AccountGenerator {
             // Look for MEGA confirmation email
             for msg in &messages {
                 if msg.mail_from.contains("mega") || msg.mail_subject.contains("MEGA") {
+                    saw_mega_email = true;
+
                     // Fetch full email body
                     let details = self.mail_client.fetch_email(email, &msg.mail_id).await?;
                     if let Some(key) = extract_confirm_key(&details.mail_body) {
@@ -163,14 +170,14 @@ fn extract_confirm_key(body: &str) -> Option<String> {
     // https://mega.nz/#confirm<KEY>
     // https://mega.nz/confirm<KEY>
 
-    let patterns = [
+    let valid_patterns = [
         r"https://mega\.nz/#confirm([a-zA-Z0-9_-]+)",
         r"https://mega\.nz/confirm([a-zA-Z0-9_-]+)",
         r#"href="https://mega\.nz/#confirm([^"]+)"#,
         r#"href="https://mega\.nz/confirm([^"]+)"#,
     ];
 
-    for pattern in &patterns {
+    for pattern in &valid_patterns {
         if let Ok(re) = Regex::new(pattern) {
             if let Some(caps) = re.captures(body) {
                 if let Some(key) = caps.get(1) {
@@ -179,6 +186,5 @@ fn extract_confirm_key(body: &str) -> Option<String> {
             }
         }
     }
-
     None
 }

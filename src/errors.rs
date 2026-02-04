@@ -14,9 +14,6 @@ pub enum Error {
 
     #[error("No confirmation link found in email")]
     NoConfirmationLink,
-
-    #[error("Invalid confirmation link format")]
-    InvalidConfirmationLink,
 }
 
 /// Result type alias.
