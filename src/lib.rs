@@ -5,6 +5,7 @@
 mod account;
 mod errors;
 mod generator;
+mod random;
 
 pub use account::GeneratedAccount;
 pub use errors::{Error, Result};
