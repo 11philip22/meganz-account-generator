@@ -3,6 +3,10 @@
 /// The `password` field is the same plaintext value passed to
 /// [`crate::AccountGenerator::generate`] or
 /// [`crate::AccountGenerator::generate_with_name`].
+///
+/// # Security
+///
+/// This type intentionally stores and displays the plaintext password. Treat it as sensitive data.
 #[derive(Debug, Clone)]
 pub struct GeneratedAccount {
     /// Temporary email address used for registration.

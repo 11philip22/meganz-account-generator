@@ -8,11 +8,16 @@ use std::time::Duration;
 
 /// High-level MEGA account generator.
 ///
-/// Use [`AccountGenerator::new`] for defaults, or [`AccountGenerator::builder`]
-/// to configure proxy and polling behavior.
+/// `AccountGenerator` orchestrates:
+/// - creating a temporary GuerrillaMail address
+/// - registering a MEGA account
+/// - polling the inbox for a likely confirmation email
+/// - extracting the confirmation key from the email body and verifying registration
 ///
-/// This type is cheap to reuse and is intended to generate multiple accounts
-/// with the same configuration.
+/// Use [`AccountGenerator::new`] for defaults, or [`AccountGenerator::builder`] to customize
+/// `proxy`, `timeout`, and `poll_interval`.
+///
+/// This type is designed to be reused to generate multiple accounts with the same configuration.
 pub struct AccountGenerator {
     mail_client: MailClient,
     timeout: Duration,
@@ -23,9 +28,9 @@ pub struct AccountGenerator {
 /// Builder for [`AccountGenerator`].
 ///
 /// Defaults:
-/// - timeout: 300 seconds
-/// - poll interval: 5 seconds
-/// - proxy: disabled
+/// - `timeout`: 300 seconds
+/// - `poll_interval`: 5 seconds
+/// - `proxy`: disabled
 #[derive(Debug, Clone)]
 pub struct AccountGeneratorBuilder {
     timeout: Duration,
@@ -45,39 +50,34 @@ impl AccountGenerator {
     ///
     /// # Errors
     ///
-    /// Returns an error if the underlying GuerrillaMail client cannot be constructed.
+    /// Returns [`Error::Mail`] if the underlying GuerrillaMail client cannot be constructed
+    /// (for example due to proxy misconfiguration or transport errors).
     pub async fn new() -> Result<Self> {
         Self::builder().build().await
     }
 
     /// Generate and confirm a MEGA account using a random display name.
     ///
-    /// A random temporary GuerrillaMail alias is always used for the email.
+    /// A random temporary GuerrillaMail alias is always used for the email address.
+    ///
+    /// After registration succeeds, the generator polls the inbox until it can extract a confirmation key
+    /// from a likely MEGA email body and verify the registration.
     ///
     /// # Errors
     ///
     /// Returns:
-    /// - [`Error::Mail`] if GuerrillaMail inbox creation, polling, or cleanup fails
-    /// - [`Error::Mega`] if MEGA registration or confirmation fails
-    /// - [`Error::EmailTimeout`] if no confirmation email arrives before `timeout`
-    /// - [`Error::NoConfirmationLink`] if a likely MEGA email arrives but no confirmation key can be parsed
+    /// - [`Error::Mail`] if GuerrillaMail inbox creation, polling, or message-body fetching fails
+    /// - [`Error::Mega`] if MEGA registration or verification fails
+    /// - [`Error::EmailTimeout`] if no likely MEGA email is observed before `timeout`
+    /// - [`Error::NoConfirmationLink`] if a likely MEGA email is observed before `timeout`, but no confirmation
+    ///   key can be extracted from its body
     ///
     /// Polling checks GuerrillaMail every `poll_interval` until `timeout` elapses.
     ///
-    /// # Examples
+    /// The timeout is evaluated at the start of each poll iteration. As a result, total wall-clock time may
+    /// exceed `timeout` by the duration of an in-flight poll request plus up to one `poll_interval` sleep.
     ///
-    /// ```no_run
-    /// use meganz_account_generator::AccountGenerator;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let generator = AccountGenerator::new().await?;
-    /// let account = generator.generate("S3cure-Password!").await?;
-    ///
-    /// println!("{}", account.email);
-    /// # Ok(())
-    /// # }
-    /// ```
+    /// Cleanup of the temporary inbox is best-effort; deletion errors are ignored after successful confirmation.
     pub async fn generate(&self, password: &str) -> Result<GeneratedAccount> {
         let name = generate_random_name();
         self.generate_inner(password, name).await
@@ -85,7 +85,7 @@ impl AccountGenerator {
 
     /// Generate and confirm a MEGA account with an explicit display name.
     ///
-    /// A random temporary GuerrillaMail alias is always used for the email.
+    /// A random temporary GuerrillaMail alias is always used for the email address.
     ///
     /// # Errors
     ///
@@ -93,22 +93,8 @@ impl AccountGenerator {
     ///
     /// Polling checks GuerrillaMail every `poll_interval` until `timeout` elapses.
     ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use meganz_account_generator::AccountGenerator;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let generator = AccountGenerator::new().await?;
-    /// let account = generator
-    ///     .generate_with_name("S3cure-Password!", "Jane Doe")
-    ///     .await?;
-    ///
-    /// assert_eq!(account.name, "Jane Doe");
-    /// # Ok(())
-    /// # }
-    /// ```
+    /// The timeout is evaluated at the start of each poll iteration. As a result, total wall-clock time may
+    /// exceed `timeout` by the duration of an in-flight poll request plus up to one `poll_interval` sleep.
     pub async fn generate_with_name(&self, password: &str, name: &str) -> Result<GeneratedAccount> {
         self.generate_inner(password, name.to_string()).await
     }
@@ -188,6 +174,9 @@ impl AccountGeneratorBuilder {
     /// Configure an HTTP proxy URL for MEGA and GuerrillaMail requests.
     ///
     /// The value is forwarded directly to both underlying clients.
+    ///
+    /// This crate does not validate the URL beyond passing it through to the clients; invalid values are
+    /// typically reported as [`Error::Mail`] during [`AccountGeneratorBuilder::build`].
     pub fn proxy(mut self, proxy: impl Into<String>) -> Self {
         self.proxy = Some(proxy.into());
         self
@@ -195,8 +184,10 @@ impl AccountGeneratorBuilder {
 
     /// Configure the maximum time to wait for a confirmation email.
     ///
-    /// When this duration elapses, generation fails with either
-    /// [`Error::EmailTimeout`] or [`Error::NoConfirmationLink`].
+    /// When this duration elapses, generation fails with:
+    /// - [`Error::EmailTimeout`] if no likely MEGA email has been observed
+    /// - [`Error::NoConfirmationLink`] if a likely MEGA email was observed, but no confirmation key could be
+    ///   extracted from its body
     pub fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout;
         self
@@ -214,30 +205,6 @@ impl AccountGeneratorBuilder {
     ///
     /// Returns [`Error::Mail`] if the GuerrillaMail client fails to initialize
     /// (e.g., proxy misconfiguration or network errors).
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use std::time::Duration;
-    /// use meganz_account_generator::AccountGenerator;
-    ///
-    /// # #[tokio::main]
-    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let generator = AccountGenerator::builder()
-    ///     .proxy("http://127.0.0.1:8080")
-    ///     .timeout(Duration::from_secs(120))
-    ///     .poll_interval(Duration::from_secs(2))
-    ///     .build()
-    ///     .await?;
-    ///
-    /// let account = generator
-    ///     .generate_with_name("S3cure-Password!", "Automation Bot")
-    ///     .await?;
-    ///
-    /// println!("Created {}", account.email);
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn build(self) -> Result<AccountGenerator> {
         let mail_client = build_mail_client(self.proxy.as_deref()).await?;
         Ok(AccountGenerator {
