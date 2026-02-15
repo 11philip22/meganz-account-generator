@@ -11,10 +11,10 @@ Automated account creation for MEGA.nz using temporary email addresses (Guerrill
 
 ## Features
 
-- 📧 **Automated Email**: Uses GuerrillaMail to generate temporary email addresses
-- 🤖 **Auto-Verification**: Automatically polls for the MEGA confirmation email and extracts the verification link
-- 🔐 **Account Creation**: Handles the full registration and verification handshake
-- 📚 **Library & CLI**: Use as a Rust library or run the included CLI example
+- **Automated Email**: Uses GuerrillaMail to generate temporary email addresses
+- **Auto-Verification**: Automatically polls for the MEGA confirmation email and extracts the verification link
+- **Account Creation**: Handles the full registration and verification handshake
+- **Library & CLI**: Use as a Rust library or run the included CLI example
 
 ## Usage as Library
 
@@ -48,24 +48,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-## Public API
-
-The library exposes the following public types and methods:
-
-- `Error`: error enum for account generation failures
-- `Result<T>`: crate-specific result alias
-- `GeneratedAccount`: contains `email`, `password`, and `name`
-- `AccountGenerator`:
-  - `new() -> Result<AccountGenerator>`: default 5-minute timeout, 5-second poll
-  - `with_timeouts(timeout: Duration, poll_interval: Duration) -> Result<AccountGenerator>`
-  - `builder() -> AccountGeneratorBuilder`
-  - `AccountGeneratorBuilder::proxy(proxy)`
-  - `AccountGeneratorBuilder::timeout(timeout)`
-  - `AccountGeneratorBuilder::poll_interval(poll_interval)`
-  - `AccountGeneratorBuilder::build().await`
-  - `generate(password: &str) -> Result<GeneratedAccount>`
-  - `generate_with_name(password: &str, name: &str) -> Result<GeneratedAccount>`
-
 ## Running the CLI Example
 
 Clone the repository and run the CLI example:
@@ -98,12 +80,20 @@ Options:
   -V, --version              Print version
 ```
 
+## Documentation
+
+For detailed API documentation, visit [docs.rs/meganz-account-generator](https://docs.rs/meganz-account-generator).
+
 ## Contributing
 
-PRs are welcome!  
-Please run `cargo fmt` and `cargo clippy` before submitting.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-If you’re changing behavior, please document it in the PR.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/cool-feature`)
+3. Commit your changes (`git commit -m 'Add some cool feature'`)
+4. Push to the branch (`git push origin feature/cool-feature`)
+5. Open a Pull Request
+
 
 ## Support
 

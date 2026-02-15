@@ -11,7 +11,7 @@ categories = ["api-bindings", "authentication", "command-line-utilities"]
 
 [dependencies]
 # MEGA client
-megalib = "0.5.0"
+megalib = "0.5.1"
 
 # Temporary email
 guerrillamail-client = "0.7.0"
