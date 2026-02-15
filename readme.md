@@ -22,7 +22,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-meganz-account-generator = "0.3.4"
+meganz-account-generator = "0.4.3"
 ```
 
 ```rust
