@@ -1,13 +1,19 @@
-# MEGA.nz Account Generator
+<p align="center">
+  <img src="assets/hero-banner.png" alt="hero pane" width="980">
+</p>
 
-[![Crates.io](https://img.shields.io/crates/v/meganz-account-generator.svg)](https://crates.io/crates/meganz-account-generator)
-[![Documentation](https://docs.rs/meganz-account-generator/badge.svg)](https://docs.rs/meganz-account-generator)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/woldp001/guerrillamail-client-rs/pulls)
+<p align="center">
+  <a href="https://crates.io/crates/meganz-account-generator"><img src="https://img.shields.io/badge/crates.io-meganz--account--generator-F59E0B?style=for-the-badge&logo=rust&logoColor=white" alt="Crates.io"></a>
+  <a href="https://docs.rs/meganz-account-generator"><img src="https://img.shields.io/badge/docs.rs-meganz--account--generator-3B82F6?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-8B5CF6?style=for-the-badge" alt="MIT License"></a>
+  <a href="https://github.com/woldp001/meganz-account-generator/pulls"><img src="https://img.shields.io/badge/PRs-Welcome-22C55E?style=for-the-badge" alt="PRs Welcome"></a>
+</p>
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/b/bc/MEGA_logo.png" alt="MEGA Logo" width="300">
+<p align="center">
+  <a href="#features">Features</a> · <a href="#usage-as-library">Usage as Library</a> · <a href="#running-the-cli-example">Running the CLI Example</a> · <a href="#cli-options">CLI Options</a> · <a href="#documentation">Documentation</a> · <a href="#contributing">Contributing</a> · <a href="#support">Support</a> · <a href="#license">License</a>
+</p>
 
-Automated account creation for MEGA.nz using temporary email addresses (GuerrillaMail).
+---
 
 ## Features
 
@@ -103,4 +109,4 @@ If this crate saves you time or helps your work, support is appreciated:
 
 ## License
 
-This project is licensed under the MIT License; see the [license](license) file for details.
+This project is licensed under the MIT License; see the [license](https://opensource.org/licenses/MIT) for details.
