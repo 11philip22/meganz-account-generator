@@ -1,112 +1,116 @@
-<p align="center">
-  <img src="assets/hero-banner.png" alt="hero pane" width="980">
-</p>
+<div align="center">
+  <h1>MEGA.nz Account Generator</h1>
+  <p><strong>Automated MEGA.nz account registration and confirmation for Rust.</strong></p>
 
-<p align="center">
-  <a href="https://crates.io/crates/meganz-account-generator"><img src="https://img.shields.io/badge/crates.io-meganz--account--generator-F59E0B?style=for-the-badge&logo=rust&logoColor=white" alt="Crates.io"></a>
-  <a href="https://docs.rs/meganz-account-generator"><img src="https://img.shields.io/badge/docs.rs-meganz--account--generator-3B82F6?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-8B5CF6?style=for-the-badge" alt="MIT License"></a>
-  <a href="https://github.com/woldp001/meganz-account-generator/pulls"><img src="https://img.shields.io/badge/PRs-Welcome-22C55E?style=for-the-badge" alt="PRs Welcome"></a>
-</p>
+  <p>
+    <a href="https://crates.io/crates/meganz-account-generator"><img src="https://img.shields.io/crates/v/meganz-account-generator?style=for-the-badge&logo=rust&color=F59E0B" alt="Crates.io"></a>
+    <a href="https://docs.rs/meganz-account-generator"><img src="https://img.shields.io/docsrs/meganz-account-generator?style=for-the-badge&logo=readthedocs&color=3B82F6" alt="docs.rs"></a>
+    <a href="https://crates.io/crates/meganz-account-generator"><img src="https://img.shields.io/crates/l/meganz-account-generator?style=for-the-badge&color=10B981" alt="License"></a>
+    <a href="https://github.com/11philip22/meganz-account-generator"><img src="https://img.shields.io/badge/Rust-2024-8B5CF6?style=for-the-badge&logo=rust&logoColor=white" alt="Rust 2024"></a>
+  </p>
 
-<p align="center">
-  <a href="#features">Features</a> · <a href="#usage-as-library">Usage as Library</a> · <a href="#running-the-cli-example">Running the CLI Example</a> · <a href="#cli-options">CLI Options</a> · <a href="#documentation">Documentation</a> · <a href="#contributing">Contributing</a> · <a href="#support">Support</a> · <a href="#license">License</a>
-</p>
+  <p>
+    <a href="#features">Features</a>
+    &middot;
+    <a href="#install">Install</a>
+    &middot;
+    <a href="#library-usage">Library Usage</a>
+    &middot;
+    <a href="#cli-example">CLI Example</a>
+    &middot;
+    <a href="#configuration">Configuration</a>
+  </p>
+</div>
 
 ---
 
+`meganz-account-generator` creates a temporary GuerrillaMail inbox, starts a MEGA.nz registration, polls for the confirmation email, extracts the confirmation key, verifies the account, and returns the generated credentials.
+
+> [!IMPORTANT]
+> This crate depends on external MEGA.nz and GuerrillaMail behavior. Use account automation only where it is permitted, and expect failures if upstream APIs, email delivery, or rate limits change.
+
 ## Features
 
-- **Automated Email**: Uses GuerrillaMail to generate temporary email addresses
-- **Auto-Verification**: Automatically polls for the MEGA confirmation email and extracts the verification link
-- **Account Creation**: Handles the full registration and verification handshake
-- **Library & CLI**: Use as a Rust library or run the included CLI example
+- End-to-end account registration and email confirmation.
+- Random temporary email aliases and random display names.
+- Optional explicit account display names.
+- Proxy support for both MEGA.nz and GuerrillaMail requests.
+- Reusable async generator with configurable timeout and polling interval.
+- CLI example for one-off or repeated account creation.
 
-## Usage as Library
+## Install
 
-Add to your `Cargo.toml`:
+Add the crate to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-meganz-account-generator = "0.4.3"
+meganz-account-generator = "0.4.4"
 ```
 
+The crate uses Tokio, so your application needs an async runtime.
+
+## Library Usage
+
 ```rust
+use std::time::Duration;
 use meganz_account_generator::AccountGenerator;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize generator
-    let generator = AccountGenerator::new().await?;
-
-    // specific name
-    let account = generator
-        .generate_with_name("MySecurePassword123!", "My Name")
+    let generator = AccountGenerator::builder()
+        .timeout(Duration::from_secs(180))
+        .poll_interval(Duration::from_secs(3))
+        // .proxy("http://127.0.0.1:8080")
+        .build()
         .await?;
-    
-    // OR random name
-    // let account = generator.generate("MySecurePassword123!").await?;
+
+    let account = generator
+        .generate_with_name("S3cure-Password!", "Automation Bot")
+        .await?;
 
     println!("Created account: {}", account.email);
-    println!("Password: {}", account.password);
-    
+    println!("Name: {}", account.name);
+
     Ok(())
 }
 ```
 
-## Running the CLI Example
+For a random display name, call `generate(password)` instead of `generate_with_name(password, name)`.
 
-Clone the repository and run the CLI example:
+## CLI Example
+
+Run the included example from a checkout:
 
 ```bash
-# Generate one account
 cargo run --example cli -- --password "YourStrongPassword!"
-
-# Generate 5 accounts and save to file
-cargo run --example cli -- --password "YourStrongPassword!" --count 5 --output accounts.txt
-
-# Specify a custom name
 cargo run --example cli -- --password "YourStrongPassword!" --name "Custom User"
-
-# Use an HTTP proxy and verbose output
+cargo run --example cli -- --password "YourStrongPassword!" --count 5 --output accounts.txt
 cargo run --example cli -- --password "YourStrongPassword!" --proxy "http://127.0.0.1:8080" --verbose
 ```
 
-## CLI Options
+CLI options:
 
-```
-Options:
-  -p, --password <PASSWORD>  Password for the new account(s)
-  -n, --name <NAME>          Name for the account (random if not specified)
-  -c, --count <COUNT>        Number of accounts to generate [default: 1]
-  -o, --output <FILE>        Output file to save credentials (appends to file)
-      --proxy <PROXY>        Proxy URL (e.g., http://127.0.0.1:8080)
-  -v, --verbose              Show detailed per-account output
-  -h, --help                 Print help
-  -V, --version              Print version
-```
+| Option | Description |
+| --- | --- |
+| `-p, --password <PASSWORD>` | Password for generated accounts. |
+| `-n, --name <NAME>` | Account display name. Random when omitted. |
+| `-c, --count <COUNT>` | Number of accounts to create. Defaults to `1`. |
+| `-o, --output <FILE>` | Append generated credentials to a file. |
+| `--proxy <PROXY>` | Proxy URL, such as `http://127.0.0.1:8080`. |
+| `-v, --verbose` | Print detailed per-account output. |
+
+## Configuration
+
+`AccountGenerator::new().await` uses the default settings. Use `AccountGenerator::builder()` when you need to customize runtime behavior.
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `timeout` | `300s` | Maximum time to wait for a likely MEGA.nz confirmation email. |
+| `poll_interval` | `5s` | Delay between GuerrillaMail inbox checks. |
+| `proxy` | Disabled | Optional proxy forwarded to both underlying clients. |
+
+Generation returns `GeneratedAccount` only after registration is confirmed. Failures are reported as `Error::Mail`, `Error::Mega`, `Error::EmailTimeout`, or `Error::NoConfirmationLink`.
 
 ## Documentation
 
-For detailed API documentation, visit [docs.rs/meganz-account-generator](https://docs.rs/meganz-account-generator).
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/cool-feature`)
-3. Commit your changes (`git commit -m 'Add some cool feature'`)
-4. Push to the branch (`git push origin feature/cool-feature`)
-5. Open a Pull Request
-
-
-## Support
-
-If this crate saves you time or helps your work, support is appreciated:
-
-[![Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/11philip22)
-
-## License
-
-This project is licensed under the MIT License; see the [license](https://opensource.org/licenses/MIT) for details.
+API documentation is available on [docs.rs/meganz-account-generator](https://docs.rs/meganz-account-generator).
